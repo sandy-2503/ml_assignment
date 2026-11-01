@@ -13,7 +13,7 @@ Implement and compare five classification algorithms on one classification datas
 - **Caution:** This is an educational ML exercise, not a medical diagnostic tool.
 
 ## c. GitHub Repository Link
-Add your repository URL here after creating and pushing the project: **[PASTE YOUR GITHUB REPOSITORY URL]**
+Add your repository URL here after creating and pushing the project: (https://github.com/sandy-2503/ml_assignment)
 
 ## d. Models used
 
