@@ -13,7 +13,7 @@ Implement and compare five classification algorithms on one classification datas
 - **Caution:** This is an educational ML exercise, not a medical diagnostic tool.
 
 ## c. GitHub Repository Link
-Add your repository URL here after creating and pushing the project: **[PASTE YOUR GITHUB REPOSITORY URL]**
+Add your repository URL here after creating and pushing the project: **[https://github.com/sandy-2503/ml_assignment]**
 
 ## d. Models used
 
@@ -54,9 +54,3 @@ Metrics are calculated on the held-out test set. AUC uses the predicted probabil
 - `model/`: Five saved model pipelines.
 - `reports/metrics.csv`: Metric comparison table.
 - `reports/evaluation_details.json`: Confusion matrices and classification reports from the generated test run.
-
-## Deployment
-Deploy the repository on Streamlit Community Cloud. Replace the GitHub and live-app placeholders in the submitted PDF with your actual links after deployment. The app evaluates uploaded data using saved models; it does not retrain on uploaded data.
-
-## Academic integrity note
-Use this project as a learning scaffold. Review the code, understand each model and metric, customize the analysis in your own words, and follow your institute's rules for AI assistance. Do not claim that a GitHub repository, cloud deployment, or BITS Virtual Lab screenshot exists until you have created it yourself.
