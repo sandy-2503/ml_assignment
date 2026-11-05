@@ -19,39 +19,67 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, roc_auc_score, precision_score, recall_score, f1_score, matthews_corrcoef
 
-ROOT = Path(__file__).resolve().parent
-(ROOT / "model").mkdir(exist_ok=True)
-(ROOT / "reports").mkdir(exist_ok=True)
-raw = load_breast_cancer(as_frame=True).frame.copy()
-raw["target"] = raw["target"].map({0: "malignant", 1: "benign"})
-X, y = raw.drop(columns="target"), raw["target"]
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.25, random_state=42, stratify=y)
-models = {
+PROJECT_DIRECTORY = Path(__file__).resolve().parent
+(PROJECT_DIRECTORY / "model").mkdir(exist_ok=True)
+(PROJECT_DIRECTORY / "reports").mkdir(exist_ok=True)
+dataset = load_breast_cancer(as_frame=True).frame.copy()
+dataset["target"] = dataset["target"].map({0: "malignant", 1: "benign"})
+features = dataset.drop(columns="target")
+labels = dataset["target"]
+training_features, testing_features, training_labels, testing_labels = train_test_split(
+    features, labels, test_size=0.25, random_state=42, stratify=labels
+)
+classifiers = {
     "Logistic Regression": Pipeline([("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler()), ("classifier", LogisticRegression(max_iter=5000, random_state=42))]),
     "Decision Tree": Pipeline([("imputer", SimpleImputer(strategy="median")), ("classifier", DecisionTreeClassifier(random_state=42))]),
     "K-Nearest Neighbors": Pipeline([("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler()), ("classifier", KNeighborsClassifier(n_neighbors=5))]),
     "Naive Bayes": Pipeline([("imputer", SimpleImputer(strategy="median")), ("classifier", GaussianNB())]),
     "Support Vector Machine": Pipeline([("imputer", SimpleImputer(strategy="median")), ("scaler", StandardScaler()), ("classifier", SVC(probability=True, random_state=42))])
 }
-rows = []
-for name, estimator in models.items():
-    estimator.fit(X_train, y_train)
-    joblib.dump(estimator, ROOT / "model" / (name.lower().replace(" ", "_").replace("-", "") + ".joblib"))
-    predicted = estimator.predict(X_test)
-    classes = list(estimator.named_steps["classifier"].classes_)
-    p_malignant = estimator.predict_proba(X_test)[:, classes.index("malignant")]
-    rows.append({
-        "ML Model Name": name,
-        "Accuracy": accuracy_score(y_test, predicted),
-        "AUC": roc_auc_score((y_test == "malignant").astype(int), p_malignant),
-        "Precision": precision_score(y_test, predicted, pos_label="malignant", zero_division=0),
-        "Recall": recall_score(y_test, predicted, pos_label="malignant", zero_division=0),
-        "F1": f1_score(y_test, predicted, pos_label="malignant", zero_division=0),
-        "MCC": matthews_corrcoef(y_test, predicted)
+MODEL_FILES = {
+    "Logistic Regression": "logistic_regression.joblib",
+    "Decision Tree": "decision_tree.joblib",
+    "K-Nearest Neighbors": "k_nearest_neighbors.joblib",
+    "Naive Bayes": "naive_bayes.joblib",
+    "Support Vector Machine": "support_vector_machine.joblib",
+}
+metric_rows = []
+for classifier_name, classifier_pipeline in classifiers.items():
+    classifier_pipeline.fit(training_features, training_labels)
+    joblib.dump(
+        classifier_pipeline,
+        PROJECT_DIRECTORY / "model" / MODEL_FILES[classifier_name],
+    )
+    predicted_labels = classifier_pipeline.predict(testing_features)
+    classifier_classes = list(
+        classifier_pipeline.named_steps["classifier"].classes_
+    )
+    malignant_probabilities = classifier_pipeline.predict_proba(testing_features)[
+        :, classifier_classes.index("malignant")
+    ]
+    metric_rows.append({
+        "ML Model Name": classifier_name,
+        "Accuracy": accuracy_score(testing_labels, predicted_labels),
+        "AUC": roc_auc_score(
+            (testing_labels == "malignant").astype(int), malignant_probabilities
+        ),
+        "Precision": precision_score(
+            testing_labels, predicted_labels, pos_label="malignant", zero_division=0
+        ),
+        "Recall": recall_score(
+            testing_labels, predicted_labels, pos_label="malignant", zero_division=0
+        ),
+        "F1": f1_score(
+            testing_labels, predicted_labels, pos_label="malignant", zero_division=0
+        ),
+        "MCC": matthews_corrcoef(testing_labels, predicted_labels)
     })
-pd.DataFrame(rows).to_csv(ROOT / "reports" / "metrics.csv", index=False)
+metrics_dataframe = pd.DataFrame(metric_rows)
+metrics_dataframe.to_csv(
+    PROJECT_DIRECTORY / "reports" / "metrics.csv", index=False
+)
 # Store the held-out test data with target column, as required by the assignment.
-test = X_test.copy()
-test["target"] = y_test.values
-test.to_csv(ROOT / "test_data.csv", index=False)
-print(pd.DataFrame(rows).round(4).to_string(index=False))
+test_dataset = testing_features.copy()
+test_dataset["target"] = testing_labels.values
+test_dataset.to_csv(PROJECT_DIRECTORY / "test_data.csv", index=False)
+print(metrics_dataframe.round(4).to_string(index=False))
